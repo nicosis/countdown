@@ -31,17 +31,63 @@
 
         .timer-display {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 32vw; /* Tamaño masivo para móvil vertical */
+            font-size: 31vw; /* Ajustado de 38vw para evitar desborde horizontal */
             line-height: 1;
             font-variant-numeric: tabular-nums;
-            text-shadow: 0 0 20px rgba(189, 147, 249, 0.3);
+            font-weight: 800;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Estilos de alerta con alto contraste */
-        .mode-combate { color: var(--fg); }
-        .mode-descanso { color: var(--green); text-shadow: 0 0 15px rgba(80, 250, 123, 0.4); }
-        .last-60 { color: var(--orange); }
-        .last-10 { color: var(--red); animation: pulse 0.5s infinite alternate; }
+        /* Estilos de alerta con alto contraste y degradados */
+        .mode-combate { 
+            background: linear-gradient(to bottom, #ffffff 30%, #bd93f9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 25px rgba(189, 147, 249, 0.3));
+        }
+        .mode-descanso { 
+            background: linear-gradient(to bottom, #ffffff 30%, #50fa7b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 25px rgba(80, 250, 123, 0.4));
+        }
+        .last-60 { 
+            background: linear-gradient(to bottom, #ffffff 30%, #ffb86c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 25px rgba(255, 184, 108, 0.4));
+        }
+        .last-10 { 
+            background: linear-gradient(to bottom, #ffffff 30%, #ff5555 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 30px rgba(255, 85, 85, 0.6));
+            animation: pulse 0.5s infinite alternate; 
+        }
+
+        /* Resplandor de fondo dinámico */
+        .timer-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timer-container::before {
+            content: '';
+            position: absolute;
+            width: 140%;
+            height: 140%;
+            background: radial-gradient(circle, rgba(189, 147, 249, 0.08) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+            transition: background 0.5s;
+        }
+
+        .mode-descanso-glow .timer-container::before {
+            background: radial-gradient(circle, rgba(80, 250, 123, 0.08) 0%, transparent 70%);
+        }
 
         @keyframes pulse {
             from { opacity: 1; transform: scale(1); }
@@ -121,16 +167,18 @@
 
     <!-- Área del Timer Central (Protagonista) -->
     <main class="flex-grow flex flex-col items-center justify-center px-4">
-        <div id="statusLabel" class="text-lg font-black uppercase tracking-[0.3em] mb-4 text-[#ff79c6]">
-            Prepárate
-        </div>
-        
-        <div id="mainTimer" class="timer-display font-extrabold transition-all duration-300">
-            05:00
-        </div>
+        <div class="timer-container">
+            <div id="statusLabel" class="text-lg font-black uppercase tracking-[0.4em] mb-4 text-[#ff79c6] drop-shadow-md">
+                Prepárate
+            </div>
+            
+            <div id="mainTimer" class="timer-display font-extrabold transition-all duration-300">
+                05:00
+            </div>
 
-        <div id="nextInfo" class="mt-4 text-sm font-bold text-[#6272a4]">
-            Próximo: Descanso (01:00)
+            <div id="nextInfo" class="mt-4 text-sm font-bold text-[#6272a4] opacity-80">
+                Próximo: Descanso (01:00)
+            </div>
         </div>
     </main>
 
@@ -166,22 +214,34 @@
             <button onclick="toggleSettings()"><i data-lucide="x" class="w-8 h-8"></i></button>
         </div>
 
-        <div class="flex-grow space-y-8">
+        <div class="flex-grow space-y-8 overflow-y-auto pr-2">
             <div>
                 <label class="block text-xs uppercase font-black text-[#6272a4] mb-3">Lucha (Minutos)</label>
-                <input type="number" id="inRound" value="5" class="w-full bg-[#44475a] p-6 rounded-2xl text-4xl font-black border-none text-white outline-none focus:ring-2 focus:ring-[#bd93f9]">
+                <div class="flex items-center gap-2">
+                    <button onclick="changeValue('inRound', -1)" class="flex-shrink-0 w-16 h-16 bg-[#44475a] active:bg-[#6272a4] rounded-2xl flex items-center justify-center text-3xl font-black text-white">-</button>
+                    <input type="number" id="inRound" value="5" class="w-full bg-[#44475a] p-4 rounded-2xl text-4xl font-black border-none text-white outline-none text-center">
+                    <button onclick="changeValue('inRound', 1)" class="flex-shrink-0 w-16 h-16 bg-[#44475a] active:bg-[#6272a4] rounded-2xl flex items-center justify-center text-3xl font-black text-white">+</button>
+                </div>
             </div>
             <div>
                 <label class="block text-xs uppercase font-black text-[#6272a4] mb-3">Descanso (Segundos)</label>
-                <input type="number" id="inRest" value="60" class="w-full bg-[#44475a] p-6 rounded-2xl text-4xl font-black border-none text-white outline-none focus:ring-2 focus:ring-[#50fa7b]">
+                <div class="flex items-center gap-2">
+                    <button onclick="changeValue('inRest', -5)" class="flex-shrink-0 w-16 h-16 bg-[#44475a] active:bg-[#6272a4] rounded-2xl flex items-center justify-center text-3xl font-black text-white">-</button>
+                    <input type="number" id="inRest" value="60" class="w-full bg-[#44475a] p-4 rounded-2xl text-4xl font-black border-none text-white outline-none text-center">
+                    <button onclick="changeValue('inRest', 5)" class="flex-shrink-0 w-16 h-16 bg-[#44475a] active:bg-[#6272a4] rounded-2xl flex items-center justify-center text-3xl font-black text-white">+</button>
+                </div>
             </div>
             <div>
                 <label class="block text-xs uppercase font-black text-[#6272a4] mb-3">Rounds</label>
-                <input type="number" id="inTotal" value="5" class="w-full bg-[#44475a] p-6 rounded-2xl text-4xl font-black border-none text-white outline-none focus:ring-2 focus:ring-[#ffb86c]">
+                <div class="flex items-center gap-2">
+                    <button onclick="changeValue('inTotal', -1)" class="flex-shrink-0 w-16 h-16 bg-[#44475a] active:bg-[#6272a4] rounded-2xl flex items-center justify-center text-3xl font-black text-white">-</button>
+                    <input type="number" id="inTotal" value="5" class="w-full bg-[#44475a] p-4 rounded-2xl text-4xl font-black border-none text-white outline-none text-center">
+                    <button onclick="changeValue('inTotal', 1)" class="flex-shrink-0 w-16 h-16 bg-[#44475a] active:bg-[#6272a4] rounded-2xl flex items-center justify-center text-3xl font-black text-white">+</button>
+                </div>
             </div>
         </div>
 
-        <button onclick="saveSettings()" class="w-full bg-[#bd93f9] text-[#282a36] p-6 rounded-2xl font-black text-xl uppercase mb-4">
+        <button onclick="saveSettings()" class="w-full bg-[#bd93f9] text-[#282a36] p-6 rounded-2xl font-black text-xl uppercase mt-6 mb-4 shadow-lg active:scale-95 transition-transform">
             ¡OSS! Guardar
         </button>
     </div>
@@ -213,18 +273,41 @@
         };
 
         // --- Lógica del Reloj ---
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function changeValue(id, delta) {
+            const el = document.getElementById(id);
+            let val = parseInt(el.value) + delta;
+            if (val < 0) val = 0; 
+            el.value = val;
+        }
+
         function updateUI() {
-            const m = Math.floor(state.timeLeft / 60);
-            const s = state.timeLeft % 60;
             const timerEl = document.getElementById('mainTimer');
-            timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            timerEl.textContent = formatTime(state.timeLeft);
             
             // Gestión de Colores y Contrastes
             timerEl.className = 'timer-display font-extrabold transition-all duration-300';
+            document.body.classList.remove('mode-descanso-glow');
             const label = document.getElementById('statusLabel');
+
+            // Bloquear botón de ajustes si está corriendo
+            const settingsBtn = document.querySelector('button[onclick="toggleSettings()"]');
+            if (state.isRunning) {
+                settingsBtn.style.opacity = "0.3";
+                settingsBtn.style.pointerEvents = "none";
+            } else {
+                settingsBtn.style.opacity = "1";
+                settingsBtn.style.pointerEvents = "auto";
+            }
 
             if (state.mode === 'rest') {
                 timerEl.classList.add('mode-descanso');
+                document.body.classList.add('mode-descanso-glow');
                 label.textContent = "Descanso";
                 label.style.color = "#50fa7b";
             } else {
@@ -235,11 +318,22 @@
                 else timerEl.classList.add('mode-combate');
             }
 
+            // Actualizar Próxima Fase
+            const nextEl = document.getElementById('nextInfo');
+            if (state.mode === 'round') {
+                if (state.currentRound < config.totalRounds) {
+                    nextEl.textContent = `Próximo: Descanso (${formatTime(config.restTime)})`;
+                } else {
+                    nextEl.textContent = "¡Sesión Final!";
+                }
+            } else if (state.mode === 'rest') {
+                nextEl.textContent = `Próximo: Lucha (${formatTime(config.roundTime)})`;
+            } else {
+                nextEl.textContent = "Modo Libre";
+            }
+
             document.getElementById('roundDisplay').textContent = `${state.currentRound} / ${config.totalRounds}`;
-            
-            const tm = Math.floor(state.totalElapsed / 60);
-            const ts = state.totalElapsed % 60;
-            document.getElementById('totalTime').textContent = `${tm.toString().padStart(2, '0')}:${ts.toString().padStart(2, '0')}`;
+            document.getElementById('totalTime').textContent = formatTime(state.totalElapsed);
         }
 
         function tick() {
@@ -307,15 +401,27 @@
         }
 
         function toggleSettings() {
+            if (state.isRunning) return;
             document.getElementById('settingsModal').classList.toggle('hidden');
         }
 
         function saveSettings() {
+            const oldRoundTime = config.roundTime;
+            const oldRestTime = config.restTime;
+
             config.roundTime = parseInt(document.getElementById('inRound').value) * 60;
             config.restTime = parseInt(document.getElementById('inRest').value);
             config.totalRounds = parseInt(document.getElementById('inTotal').value);
+            
+            // Si el tiempo no ha empezado a correr en esta fase, lo actualizamos al nuevo valor
+            if (state.mode === 'round' && state.timeLeft === oldRoundTime) {
+                state.timeLeft = config.roundTime;
+            } else if (state.mode === 'rest' && state.timeLeft === oldRestTime) {
+                state.timeLeft = config.restTime;
+            }
+
             toggleSettings();
-            resetTimer();
+            updateUI();
         }
 
         lucide.createIcons();
