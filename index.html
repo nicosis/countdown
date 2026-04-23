@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BJJ Timer Mobile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&family=Inter:wght@600;800&display=swap" rel="stylesheet">
+    <style>
+        /* Paleta Dracula Optimizada */
+        :root {
+            --bg: #282a36;
+            --fg: #ffffff; /* Contraste máximo */
+            --purple: #bd93f9;
+            --pink: #ff79c6;
+            --green: #50fa7b;
+            --red: #ff5555;
+            --orange: #ffb86c;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .timer-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 32vw; /* Tamaño masivo para móvil vertical */
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 20px rgba(189, 147, 249, 0.3);
+        }
+
+        /* Estilos de alerta con alto contraste */
+        .mode-combate { color: var(--fg); }
+        .mode-descanso { color: var(--green); text-shadow: 0 0 15px rgba(80, 250, 123, 0.4); }
+        .last-60 { color: var(--orange); }
+        .last-10 { color: var(--red); animation: pulse 0.5s infinite alternate; }
+
+        @keyframes pulse {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0.8; transform: scale(1.02); }
+        }
+
+        .btn-control {
+            background: #44475a;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .btn-control:active {
+            transform: scale(0.9);
+            background: #6272a4;
+        }
+
+        .play-pause-circle {
+            background: var(--purple);
+            box-shadow: 0 0 30px rgba(189, 147, 249, 0.4);
+        }
+
+        /* Optimizaciones para Pantalla Horizontal (Landscape) */
+        @media (orientation: landscape) {
+            body {
+                padding: 0 1rem;
+            }
+            .timer-display {
+                font-size: 30vh; /* Reducido de 40vh */
+            }
+            nav {
+                padding: 0.5rem 2rem !important; /* Reducido verticalmente */
+            }
+            footer {
+                padding: 0.75rem !important; /* Reducido de 1.5rem */
+                gap: 0.5rem !important; /* Reducido de 1rem */
+            }
+            .play-pause-circle {
+                width: 4rem !important; /* Reducido de 5rem */
+                height: 4rem !important;
+            }
+            .play-pause-circle i {
+                width: 2rem !important;
+                height: 2rem !important;
+            }
+            .btn-control {
+                padding: 0.5rem !important; /* Reducido de 0.75rem */
+            }
+            #statusLabel {
+                margin-bottom: 0.25rem !important; /* Reducido de 0.5rem */
+                font-size: 0.75rem !important;
+            }
+            #nextInfo {
+                margin-top: 0.25rem !important;
+                font-size: 0.7rem !important;
+            }
+            #openMatBtn {
+                padding: 0.15rem 0.75rem !important;
+                font-size: 9px !important;
+            }
+        }
+    </style>
+</head>
+<body class="safe-top safe-bottom">
+
+    <!-- Indicadores Superiores (Compactos) -->
+    <nav class="p-6 flex justify-between items-start">
+        <div class="space-y-1">
+            <span class="block text-[10px] uppercase tracking-widest text-[#6272a4] font-extrabold">Round</span>
+            <div id="roundDisplay" class="text-2xl font-black text-[#bd93f9]">1 / 5</div>
+        </div>
+        <div class="text-right space-y-1">
+            <span class="block text-[10px] uppercase tracking-widest text-[#6272a4] font-extrabold">Sesión Total</span>
+            <div id="totalTime" class="text-2xl font-black text-[#8be9fd]">00:00</div>
+        </div>
+    </nav>
+
+    <!-- Área del Timer Central (Protagonista) -->
+    <main class="flex-grow flex flex-col items-center justify-center px-4">
+        <div id="statusLabel" class="text-lg font-black uppercase tracking-[0.3em] mb-4 text-[#ff79c6]">
+            Prepárate
+        </div>
+        
+        <div id="mainTimer" class="timer-display font-extrabold transition-all duration-300">
+            05:00
+        </div>
+
+        <div id="nextInfo" class="mt-4 text-sm font-bold text-[#6272a4]">
+            Próximo: Descanso (01:00)
+        </div>
+    </main>
+
+    <!-- Controles Inferiores (Ergonomía Móvil) -->
+    <footer class="p-10 flex flex-col gap-8 items-center">
+        
+        <!-- Botones de Acción -->
+        <div class="flex items-center gap-10">
+            <button onclick="resetTimer()" class="btn-control p-5 text-[#f8f8f2]">
+                <i data-lucide="rotate-ccw" class="w-8 h-8"></i>
+            </button>
+
+            <button onclick="toggleTimer()" id="playBtn" class="play-pause-circle w-28 h-28 rounded-full flex items-center justify-center">
+                <i id="playIcon" data-lucide="play" class="w-12 h-12 text-[#282a36] fill-current"></i>
+            </button>
+
+            <button onclick="toggleSettings()" class="btn-control p-5 text-[#f8f8f2]">
+                <i data-lucide="sliders-horizontal" class="w-8 h-8"></i>
+            </button>
+        </div>
+
+        <!-- Botón Modo Open Mat -->
+        <button id="openMatBtn" onclick="toggleOpenMat()" class="text-[#6272a4] flex items-center gap-2 uppercase text-[10px] tracking-widest font-black border border-[#44475a] px-4 py-2 rounded-full">
+            <i data-lucide="infinity" class="w-4 h-4"></i>
+            Modo Open Mat
+        </button>
+    </footer>
+
+    <!-- Modal de Configuración -->
+    <div id="settingsModal" class="fixed inset-0 bg-[#282a36] z-50 hidden flex flex-col p-8 overflow-y-auto">
+        <div class="flex justify-between items-center mb-10">
+            <h2 class="text-3xl font-black text-[#ff79c6]">Ajustes</h2>
+            <button onclick="toggleSettings()"><i data-lucide="x" class="w-8 h-8"></i></button>
+        </div>
+
+        <div class="flex-grow space-y-8">
+            <div>
+                <label class="block text-xs uppercase font-black text-[#6272a4] mb-3">Lucha (Minutos)</label>
+                <input type="number" id="inRound" value="5" class="w-full bg-[#44475a] p-6 rounded-2xl text-4xl font-black border-none text-white outline-none focus:ring-2 focus:ring-[#bd93f9]">
+            </div>
+            <div>
+                <label class="block text-xs uppercase font-black text-[#6272a4] mb-3">Descanso (Segundos)</label>
+                <input type="number" id="inRest" value="60" class="w-full bg-[#44475a] p-6 rounded-2xl text-4xl font-black border-none text-white outline-none focus:ring-2 focus:ring-[#50fa7b]">
+            </div>
+            <div>
+                <label class="block text-xs uppercase font-black text-[#6272a4] mb-3">Rounds</label>
+                <input type="number" id="inTotal" value="5" class="w-full bg-[#44475a] p-6 rounded-2xl text-4xl font-black border-none text-white outline-none focus:ring-2 focus:ring-[#ffb86c]">
+            </div>
+        </div>
+
+        <button onclick="saveSettings()" class="w-full bg-[#bd93f9] text-[#282a36] p-6 rounded-2xl font-black text-xl uppercase mb-4">
+            ¡OSS! Guardar
+        </button>
+    </div>
+
+    <script>
+        let config = { roundTime: 300, restTime: 60, totalRounds: 5 };
+        let state = { 
+            timeLeft: 300, isRunning: false, mode: 'round', 
+            currentRound: 1, totalElapsed: 0, interval: null, wakeLock: null 
+        };
+
+        // --- Audio Pro ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(freq, duration, type = 'square') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const notify = {
+            start: () => { playSound(400, 1); playSound(600, 1); },
+            end: () => playSound(200, 2),
+            warning: () => playSound(800, 0.1, 'sine')
+        };
+
+        // --- Lógica del Reloj ---
+        function updateUI() {
+            const m = Math.floor(state.timeLeft / 60);
+            const s = state.timeLeft % 60;
+            const timerEl = document.getElementById('mainTimer');
+            timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            
+            // Gestión de Colores y Contrastes
+            timerEl.className = 'timer-display font-extrabold transition-all duration-300';
+            const label = document.getElementById('statusLabel');
+
+            if (state.mode === 'rest') {
+                timerEl.classList.add('mode-descanso');
+                label.textContent = "Descanso";
+                label.style.color = "#50fa7b";
+            } else {
+                label.textContent = state.mode === 'round' ? "Lucha" : "Open Mat";
+                label.style.color = "#ff79c6";
+                if (state.timeLeft <= 10) timerEl.classList.add('last-10');
+                else if (state.timeLeft <= 60) timerEl.classList.add('last-60');
+                else timerEl.classList.add('mode-combate');
+            }
+
+            document.getElementById('roundDisplay').textContent = `${state.currentRound} / ${config.totalRounds}`;
+            
+            const tm = Math.floor(state.totalElapsed / 60);
+            const ts = state.totalElapsed % 60;
+            document.getElementById('totalTime').textContent = `${tm.toString().padStart(2, '0')}:${ts.toString().padStart(2, '0')}`;
+        }
+
+        function tick() {
+            if (state.timeLeft > 0) {
+                state.timeLeft--;
+                state.totalElapsed++;
+                if (state.mode === 'round' && state.timeLeft <= 3 && state.timeLeft > 0) notify.warning();
+            } else {
+                handlePhase();
+            }
+            updateUI();
+        }
+
+        function handlePhase() {
+            notify.end();
+            if (state.mode === 'round') {
+                if (state.currentRound < config.totalRounds) {
+                    state.mode = 'rest';
+                    state.timeLeft = config.restTime;
+                } else {
+                    resetTimer();
+                    alert("¡Sesión Finalizada!");
+                }
+            } else {
+                state.mode = 'round';
+                state.currentRound++;
+                state.timeLeft = config.roundTime;
+                notify.start();
+            }
+        }
+
+        function toggleTimer() {
+            if (state.isRunning) {
+                clearInterval(state.interval);
+                state.isRunning = false;
+                document.getElementById('playIcon').setAttribute('data-lucide', 'play');
+            } else {
+                if (state.timeLeft === config.roundTime) notify.start();
+                state.interval = setInterval(tick, 1000);
+                state.isRunning = true;
+                document.getElementById('playIcon').setAttribute('data-lucide', 'pause');
+                if ('wakeLock' in navigator) navigator.wakeLock.request('screen');
+            }
+            lucide.createIcons();
+        }
+
+        function resetTimer() {
+            clearInterval(state.interval);
+            state.isRunning = false;
+            state.mode = 'round';
+            state.currentRound = 1;
+            state.timeLeft = config.roundTime;
+            state.totalElapsed = 0;
+            document.getElementById('playIcon').setAttribute('data-lucide', 'play');
+            updateUI();
+            lucide.createIcons();
+        }
+
+        function toggleOpenMat() {
+            resetTimer();
+            state.mode = 'openmat';
+            state.timeLeft = 0;
+            tick = () => { state.timeLeft++; state.totalElapsed++; updateUI(); };
+            updateUI();
+        }
+
+        function toggleSettings() {
+            document.getElementById('settingsModal').classList.toggle('hidden');
+        }
+
+        function saveSettings() {
+            config.roundTime = parseInt(document.getElementById('inRound').value) * 60;
+            config.restTime = parseInt(document.getElementById('inRest').value);
+            config.totalRounds = parseInt(document.getElementById('inTotal').value);
+            toggleSettings();
+            resetTimer();
+        }
+
+        lucide.createIcons();
+        updateUI();
+    </script>
+</body>
+</html>
