@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="author" content="Nico - nicosis@gmail.com">
-    <title>BJJ Timer Mobile</title>
+    <title></title>
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#282a36">
     <link rel="apple-touch-icon" href="./icon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="./app-info.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&family=Inter:wght@600;800&display=swap" rel="stylesheet">
     <style>
         /* Paleta Dracula Optimizada */
@@ -256,6 +256,10 @@
         <button onclick="saveSettings()" class="w-full bg-[#bd93f9] text-[#282a36] p-6 rounded-2xl font-black text-xl uppercase mt-6 mb-4 shadow-lg active:scale-95 transition-transform">
             ¡OSS! Guardar
         </button>
+
+        <!-- Bloque de autor dinámico -->
+        <div id="authorCredit" class="text-center text-[#6272a4] text-[10px] uppercase tracking-widest font-bold pb-4 opacity-70">
+        </div>
     </div>
 
     <script>
@@ -483,6 +487,27 @@
                     console.log('ServiceWorker registration failed: ', err);
                 });
             });
+        }
+
+        // Mostrar autor dinámicamente desde app-info.js
+        if (typeof AppInfo !== 'undefined') {
+            document.getElementById('authorCredit').innerHTML = `
+                Creado por <span class="text-[#8be9fd]">${AppInfo.authorName}</span> 🥋<br>
+                <a href="mailto:${AppInfo.authorEmail}" class="lowercase text-xs opacity-80 mt-1 inline-block">${AppInfo.authorEmail}</a>
+            `;
+            // Inyectamos el meta tag HTML dinámicamente
+            let metaAuthor = document.querySelector('meta[name="author"]');
+            if (!metaAuthor) {
+                metaAuthor = document.createElement('meta');
+                metaAuthor.name = "author";
+                document.head.appendChild(metaAuthor);
+            }
+            metaAuthor.setAttribute("content", `${AppInfo.authorName} - ${AppInfo.authorEmail}`);
+
+            // Actualizamos el título de la pestaña dinámicamente
+            if (AppInfo.appName) {
+                document.title = AppInfo.appName;
+            }
         }
 
         lucide.createIcons();
