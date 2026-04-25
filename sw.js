@@ -1,10 +1,11 @@
-const CACHE_NAME = 'bjj-timer-v2';
+const CACHE_NAME = 'bjj-timer-v4';
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
-  './app-info.js'
+  './app-info.js',
+  './boxing-bell.mp3'
 ];
 
 self.addEventListener('install', event => {

@@ -306,6 +306,9 @@
         };
 
         // --- Audio Pro ---
+        const boxingbellSound = new Audio('./boxing-bell.mp3');
+        boxingbellSound.preload = 'auto';
+
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(freq, duration, type = 'square') {
             const osc = audioCtx.createOscillator();
@@ -319,8 +322,20 @@
         }
 
         const notify = {
-            start: () => { playSound(400, 1); playSound(600, 1); },
-            end: () => playSound(200, 2),
+            start: () => { 
+                boxingbellSound.currentTime = 0; 
+                boxingbellSound.play().catch(() => {
+                    // Fallback si falla la carga del mp3
+                    playSound(400, 1); playSound(600, 1); 
+                });
+            },
+            end: () => {
+                boxingbellSound.currentTime = 0; 
+                boxingbellSound.play().catch(() => {
+                    // Fallback original
+                    playSound(200, 2);
+                });
+            },
             warning: () => playSound(800, 0.1, 'sine')
         };
 
