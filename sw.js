@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bjj-timer-v1';
+const CACHE_NAME = 'bjj-timer-v2';
 const urlsToCache = [
   './',
   './index.html',
