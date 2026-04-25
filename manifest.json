@@ -14,5 +14,9 @@
       "sizes": "192x192 512x512 any",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "author": {
+    "name": "Nico",
+    "email": "nicosis@gmail.com"
+  }
 }
