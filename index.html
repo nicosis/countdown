@@ -242,9 +242,9 @@
 
         <!-- Botón Modo Open Mat -->
         <div class="flex flex-col items-center gap-4">
-            <button id="openMatBtn" onclick="toggleOpenMat()" class="text-[#6272a4] flex items-center gap-2 uppercase text-[10px] tracking-widest font-black border border-[#44475a] px-4 py-2 rounded-full">
+            <button id="openMatBtn" onclick="toggleOpenMat()" class="text-[#6272a4] flex items-center gap-2 uppercase text-[10px] tracking-widest font-black border border-[#44475a] px-4 py-2 rounded-full transition-colors">
                 <i data-lucide="infinity" class="w-4 h-4"></i>
-                Modo Open Mat
+                <span id="openMatText">Iniciar Open Mat</span>
             </button>
 
             <!-- Botón Instalar App (Oculto por defecto) -->
@@ -386,9 +386,29 @@
 
             document.getElementById('roundDisplay').textContent = `${state.currentRound} / ${config.totalRounds}`;
             document.getElementById('totalTime').textContent = formatTime(state.totalElapsed);
+
+            // Actualizar estilo y texto del botón Open Mat
+            const openMatBtn = document.getElementById('openMatBtn');
+            const openMatText = document.getElementById('openMatText');
+            if (state.mode === 'openmat') {
+                openMatText.textContent = "Salir de Open Mat";
+                openMatBtn.classList.replace("text-[#6272a4]", "text-[#ff5555]");
+                openMatBtn.classList.replace("border-[#44475a]", "border-[#ff5555]");
+            } else {
+                openMatText.textContent = "Iniciar Open Mat";
+                openMatBtn.classList.replace("text-[#ff5555]", "text-[#6272a4]");
+                openMatBtn.classList.replace("border-[#ff5555]", "border-[#44475a]");
+            }
         }
 
         function tick() {
+            if (state.mode === 'openmat') {
+                state.timeLeft++;
+                state.totalElapsed++;
+                updateUI();
+                return;
+            }
+
             if (state.timeLeft > 0) {
                 state.timeLeft--;
                 state.totalElapsed++;
@@ -446,10 +466,13 @@
         }
 
         function toggleOpenMat() {
+            if (state.mode === 'openmat') {
+                resetTimer();
+                return;
+            }
             resetTimer();
             state.mode = 'openmat';
             state.timeLeft = 0;
-            tick = () => { state.timeLeft++; state.totalElapsed++; updateUI(); };
             updateUI();
         }
 
